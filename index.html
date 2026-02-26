@@ -1,0 +1,2085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>blazek.design inspo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #fff;
+    color: #1D1D1D;
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ─── TOP BAR ─── */
+  .topbar {
+    background: #fff;
+    padding: 18px 24px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid #ebebeb;
+  }
+
+  .site-title {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: #1D1D1D;
+    letter-spacing: 0.01em;
+    padding-bottom: 14px;
+  }
+
+  .topbar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 12px;
+  }
+
+  .search-wrap { position: relative; }
+
+  .search-input {
+    width: 240px;
+    background: #fff;
+    border: 1px solid #ebebeb;
+    border-radius: 8px;
+    padding: 8px 12px 8px 36px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: #111;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+
+  .search-input::placeholder { color: #aaa; }
+  .search-input:focus { border-color: #bbb; }
+
+  .search-icon {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #aaa;
+    pointer-events: none;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .site-count {
+    font-size: 13px;
+    color: #9F9FA0;
+    font-weight: 400;
+  }
+
+  .add-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #c8f135;
+    color: #111;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .add-btn:hover { background: #b8e020; }
+
+  .add-cat-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    color: #1D1D1D;
+    border: 1px solid #ebebeb;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .add-cat-btn:hover { border-color: #ccc; background: #f9f9f9; }
+
+  .filter-wrap {
+    position: relative;
+    padding-bottom: 8px;
+  }
+
+  .filter-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    overflow: hidden;
+    height: 32px; /* single line */
+    transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding-right: 36px; /* room for arrow */
+  }
+
+  .filter-row.expanded {
+    height: auto;
+  }
+
+  .filter-toggle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 28px;
+    height: 28px;
+    background: #fff;
+    border: 1px solid #ebebeb;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #9F9FA0;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+  }
+
+  .filter-toggle:hover { background: #f5f5f7; color: #1D1D1D; border-color: #ccc; }
+
+  .filter-toggle svg {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .filter-toggle.open svg {
+    transform: rotate(180deg);
+  }
+
+  .filter-btn {
+    background: transparent;
+    border: 1px solid #ebebeb;
+    color: #9F9FA0;
+    padding: 5px 8px;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-btn:hover { border-color: #ccc; color: #1D1D1D; }
+  .filter-btn.active { background: #111; border-color: #111; color: #fff; }
+  .filter-btn.dragging { opacity: 0.4; cursor: grabbing; }
+  .filter-btn.drag-over { border-color: #c8f135; background: #f9ffe8; }
+  .filter-btn[draggable="true"] { cursor: grab; }
+  .filter-btn[draggable="true"]:active { cursor: grabbing; }
+
+  .divider {
+    height: 1px;
+    background: #ebebeb;
+    margin: 0;
+  }
+
+  /* ─── MAIN ─── */
+  main { padding: 24px 24px 60px; }
+
+  .category-section {
+    margin-bottom: 32px;
+  }
+
+  .category-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .category-name {
+    font-size: 26px;
+    font-weight: 800;
+    color: #1D1D1D;
+    letter-spacing: -0.5px;
+  }
+
+  .category-count {
+    font-size: 13px;
+    color: #9F9FA0;
+    font-weight: 400;
+  }
+
+  .category-header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .sort-btn {
+    background: transparent;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: #9F9FA0;
+    cursor: pointer;
+    padding: 3px 8px;
+    border-radius: 6px;
+    transition: all 0.15s;
+    font-weight: 400;
+  }
+
+  .sort-btn:hover { color: #1D1D1D; background: #f5f5f7; }
+  .sort-btn.active { color: #1D1D1D; font-weight: 600; background: #f0f0f2; }
+
+  /* ─── GRID ─── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  @media (max-width: 1100px) { .cards-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 780px)  { .cards-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px)  { .cards-grid { grid-template-columns: 1fr; } }
+
+  /* ─── CARD ─── */
+  .card {
+    background: #F5F5F7;
+    border-radius: 8px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  }
+
+  .card-preview {
+    width: 100%;
+    aspect-ratio: 16/10;
+    background: #ebebeb;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .card-preview.loading {
+    background: linear-gradient(90deg, #F5F5F7 25%, #ececee 50%, #F5F5F7 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s infinite;
+  }
+
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .card-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+
+  .card:hover .card-preview img { transform: scale(1.03); }
+
+  .preview-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: #ccc;
+    font-size: 11px;
+  }
+
+  .card-info { padding: 12px 14px 14px; }
+
+  .card-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1D1D1D;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-domain {
+    font-size: 12px;
+    color: #9F9FA0;
+  }
+
+  .card-note {
+    color: #c8a96e;
+    font-style: italic;
+  }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: #fff;
+    border-radius: 8px;
+    padding: 32px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.15);
+    animation: popIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .modal > p { font-size: 13px; color: #888; margin-bottom: 24px; }
+
+  .modal-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+
+  .modal-field label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #888;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .modal-field input,
+  .modal-field select {
+    background: #f7f7f7;
+    border: 1px solid #ebebeb;
+    border-radius: 8px;
+    color: #1D1D1D;
+    padding: 9px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+    width: 100%;
+  }
+
+  .modal-field input:focus,
+  .modal-field select:focus { border-color: #aaa; background: #fff; }
+
+  .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+
+  .btn-primary {
+    flex: 1;
+    background: #c8f135;
+    color: #111;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn-primary:hover { background: #b8e020; }
+
+  .btn-ghost {
+    background: transparent;
+    color: #888;
+    border: 1px solid #ebebeb;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-ghost:hover { color: #111; border-color: #bbb; }
+
+  .empty { text-align: center; padding: 80px 0; color: #bbb; font-size: 13px; }
+  /* ─── LOADING STATE ─── */
+  .app-loading {
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 999;
+    transition: opacity 0.3s;
+  }
+
+  .app-loading.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .app-loading-spinner {
+    width: 28px;
+    height: 28px;
+    border: 2px solid #ebebeb;
+    border-top-color: #1D1D1D;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .app-loading p {
+    font-size: 13px;
+    color: #9F9FA0;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .setup-banner {
+    background: #fffbe6;
+    border: 1px solid #f5e06e;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 16px 24px 0;
+    font-size: 13px;
+    color: #7a6500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .setup-banner a { color: #7a6500; font-weight: 600; }
+  .setup-banner.hidden { display: none; }
+  /* ─── UPLOAD AREA ─── */
+  .upload-area {
+    border: 1.5px dashed #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    color: #9F9FA0;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .upload-area:hover { border-color: #bbb; background: #fafafa; color: #1D1D1D; }
+  .upload-area.drag-over { border-color: #c8f135; background: #f9ffe8; }
+
+  .upload-preview-wrap {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    aspect-ratio: 16/10;
+    margin-top: 6px;
+  }
+
+  .upload-preview-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 8px;
+  }
+
+  .upload-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .upload-remove:hover { background: rgba(0,0,0,0.8); }
+
+  /* ─── CARD DELETE BUTTON ─── */
+  .card-delete {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255,255,255,0.92);
+    border: 1px solid #ebebeb;
+    color: #9F9FA0;
+    border-radius: 7px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.85);
+    transition: opacity 0.15s, transform 0.15s, color 0.15s, background 0.15s;
+    z-index: 10;
+    flex-shrink: 0;
+  }
+
+  .card:hover .card-delete {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .card-delete:hover {
+    background: #fff0f0;
+    color: #e05555;
+    border-color: #f5c5c5;
+  }
+
+  .card-edit {
+    position: absolute;
+    top: 8px;
+    right: 46px;
+    background: rgba(255,255,255,0.92);
+    border: 1px solid #ebebeb;
+    color: #9F9FA0;
+    border-radius: 7px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.85);
+    transition: opacity 0.15s, transform 0.15s, color 0.15s, background 0.15s;
+    z-index: 10;
+    flex-shrink: 0;
+  }
+
+  .card:hover .card-edit {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .card-edit:hover {
+    background: #f0f8ff;
+    color: #4a90d9;
+    border-color: #c5dff5;
+  }
+
+  /* ─── CAT EDIT ─── */
+  .cat-edit-btn {
+    background: transparent;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s, background 0.15s;
+    flex-shrink: 0;
+    margin-right: 2px;
+  }
+
+  .cat-list-item:hover .cat-edit-btn { opacity: 1; }
+  .cat-edit-btn:hover { color: #4a90d9; background: #f0f8ff; }
+
+  .cat-edit-input {
+    flex: 1;
+    background: #fff;
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    color: #1D1D1D;
+    padding: 5px 9px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    outline: none;
+  }
+
+  /* ─── EDIT SITE MODAL ─── */
+  #editModal .modal { max-width: 440px; }
+  .preview-favicon-wrap {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #F5F5F7;
+  }
+
+  .preview-favicon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    object-fit: contain;
+  }
+
+  .preview-favicon-domain {
+    font-size: 11px;
+    color: #9F9FA0;
+    font-family: 'Inter', sans-serif;
+  }
+  /* ─── CATEGORY MANAGEMENT MODAL ─── */
+  .cat-manage-modal {
+    max-width: 400px;
+    padding: 24px;
+  }
+
+  .cat-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .cat-modal-header h2 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .modal-close {
+    background: transparent;
+    border: none;
+    color: #9F9FA0;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    border-radius: 6px;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  .modal-close:hover { color: #1D1D1D; background: #f5f5f5; }
+
+  .cat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 360px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+  }
+
+  .cat-list::-webkit-scrollbar { width: 3px; }
+  .cat-list::-webkit-scrollbar-thumb { background: #e8e8e8; border-radius: 2px; }
+
+  .cat-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 10px;
+    border-radius: 8px;
+    transition: background 0.12s;
+  }
+
+  .cat-list-item:hover { background: #f5f5f7; }
+
+  .cat-list-item-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cat-list-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #1D1D1D;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cat-list-count {
+    font-size: 11px;
+    color: #9F9FA0;
+    flex-shrink: 0;
+  }
+
+  .cat-delete-btn {
+    background: transparent;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s, background 0.15s;
+    flex-shrink: 0;
+  }
+
+  .cat-list-item:hover .cat-delete-btn { opacity: 1; }
+  .cat-delete-btn:hover { color: #e05555; background: #fff0f0; }
+
+  .cat-add-row {
+    display: flex;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid #ebebeb;
+  }
+
+  .cat-add-input {
+    flex: 1;
+    background: #f7f7f7;
+    border: 1px solid #ebebeb;
+    border-radius: 8px;
+    color: #1D1D1D;
+    padding: 9px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .cat-add-input:focus { border-color: #aaa; background: #fff; }
+  .cat-add-input::placeholder { color: #ccc; }
+
+  .cat-add-confirm {
+    background: #c8f135;
+    color: #111;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+
+  .cat-add-confirm:hover { background: #b8e020; }
+</style>
+</head>
+<body>
+
+<div class="app-loading" id="appLoading">
+  <div class="app-loading-spinner"></div>
+  <p>Loading your gallery...</p>
+</div>
+
+<div class="setup-banner hidden" id="setupBanner">
+  ⚠️ Supabase not configured — changes won't be saved.
+  <a href="#" onclick="showSetupHelp()">How to set up →</a>
+</div>
+
+<div class="topbar">
+  <div class="site-title">blazek.design inspo</div>
+  <div class="topbar-row">
+    <div class="search-wrap">
+      <svg class="search-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+      </svg>
+      <input type="text" class="search-input" placeholder="Search sites ..." id="searchInput" oninput="renderAll()">
+    </div>
+    <div class="topbar-right">
+      <span class="site-count" id="siteCount">0 sites</span>
+      <button class="add-cat-btn" onclick="openCatModal()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        Categories
+      </button>
+      <button class="add-btn" onclick="openModal()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        Add site
+      </button>
+    </div>
+  </div>
+  <div class="filter-wrap" id="filterWrap">
+    <div class="filter-row" id="filterBar"></div>
+    <button class="filter-toggle" id="filterToggle" onclick="toggleFilters()" title="Show all categories">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<main id="main"></main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>Add a site</h2>
+    <p>Paste a URL, give it a name, and pick a category.</p>
+    <div class="modal-field">
+      <label>URL</label>
+      <input type="url" id="newUrl" placeholder="https://example.com" />
+    </div>
+    <div class="modal-field">
+      <label>Name (optional)</label>
+      <input type="text" id="newName" placeholder="e.g. Stripe" />
+    </div>
+    <div class="modal-field">
+      <label>Note (optional)</label>
+      <input type="text" id="newNote" placeholder="e.g. Old money vibes" />
+    </div>
+    <div class="modal-field">
+      <label>Category</label>
+      <select id="newCat"></select>
+    </div>
+    <div class="modal-field">
+      <label>Or create new category</label>
+      <input type="text" id="newCatName" placeholder="e.g. E-commerce" />
+    </div>
+    <div class="modal-field">
+      <label>Cover image (optional)</label>
+      <div class="upload-area" id="uploadArea" onclick="document.getElementById('newImage').click()">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <span id="uploadLabel">Click to upload or drag & drop</span>
+        <input type="file" id="newImage" accept="image/*" style="display:none" onchange="handleImageUpload(event)" />
+      </div>
+      <div id="uploadPreview" style="display:none" class="upload-preview-wrap">
+        <img id="uploadPreviewImg" />
+        <button class="upload-remove" onclick="removeUploadedImage(event)">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="addSite()">Add site</button>
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- MANAGE CATEGORIES MODAL -->
+<div class="modal-overlay" id="catModal">
+  <div class="modal cat-manage-modal">
+    <div class="cat-modal-header">
+      <h2>Categories</h2>
+      <button class="modal-close" onclick="closeCatModal()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="cat-list" id="catList"></div>
+    <div class="cat-add-row" id="catAddRow">
+      <input type="text" id="catModalName" class="cat-add-input" placeholder="New category name..." onkeydown="if(event.key==='Enter') addCategory()" />
+      <button class="cat-add-confirm" onclick="addCategory()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT SITE MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h2>Edit site</h2>
+    <p>Update the details for this site.</p>
+    <div class="modal-field">
+      <label>URL</label>
+      <input type="url" id="editUrl" placeholder="https://example.com" />
+    </div>
+    <div class="modal-field">
+      <label>Name</label>
+      <input type="text" id="editName" placeholder="e.g. Stripe" />
+    </div>
+    <div class="modal-field">
+      <label>Note (optional)</label>
+      <input type="text" id="editNote" placeholder="e.g. Old money vibes" />
+    </div>
+    <div class="modal-field">
+      <label>Category</label>
+      <select id="editCat"></select>
+    </div>
+    <div class="modal-field">
+      <label>Cover image (optional)</label>
+      <div class="upload-area" id="editUploadArea" onclick="document.getElementById('editImage').click()">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <span>Click to upload or drag & drop</span>
+        <input type="file" id="editImage" accept="image/*" style="display:none" onchange="handleEditImageUpload(event)" />
+      </div>
+      <div id="editUploadPreview" style="display:none" class="upload-preview-wrap">
+        <img id="editUploadPreviewImg" />
+        <button class="upload-remove" onclick="removeEditUploadedImage(event)">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="saveEdit()">Save changes</button>
+      <button class="btn-ghost" onclick="closeEditModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── YOUR DATA ────────────────────────────────────────────────────────────────
+// Paste your links here: { url, name, category }
+const INITIAL_DATA = [
+  { url: 'https://circa.so/', name: 'circa.so', category: 'Weby Agentur' },
+  { url: 'https://craftwork.design/', name: 'craftwork.design', category: 'Weby Agentur' },
+  { url: 'https://plasticbionic.com/', name: 'plasticbionic.com', category: 'Weby Agentur' },
+  { url: 'https://timestwo.design/due', name: 'timestwo.design', category: 'Weby Agentur' },
+  { url: 'https://kirschberg.co.nz/', name: 'kirschberg.co.nz', category: 'Weby Agentur' },
+  { url: 'https://studio-size.com/', name: 'studio-size.com', category: 'Weby Agentur' },
+  { url: 'https://tubikstudio.com/', name: 'tubikstudio.com', category: 'Weby Agentur' },
+  { url: 'https://lasse.design/', name: 'lasse.design', category: 'Weby Agentur' },
+  { url: 'https://gracianoillustration.com/', name: 'gracianoillustration.com', category: 'Weby Agentur' },
+  { url: 'https://illo.tv/', name: 'illo — a very creative studio', category: 'Weby Agentur' },
+  { url: 'https://algo.tv/elections', name: 'algo.tv', category: 'Weby Agentur' },
+  { url: 'http://unarshia.me/', name: 'unarshia.me', category: 'Weby Agentur' },
+  { url: 'https://burocratik.com/work/', name: 'burocratik.com', category: 'Weby Agentur' },
+  { url: 'https://kaaio.studio/', name: 'kaaio.studio', category: 'Weby Agentur' },
+  { url: 'https://erva.design/', name: 'erva.design', category: 'Weby Agentur' },
+  { url: 'https://locomotive.ca/en', name: 'locomotive.ca', category: 'Weby Agentur' },
+  { url: 'https://lasca.studio/', name: 'lasca.studio', category: 'Weby Agentur' },
+  { url: 'https://jotaoshiro.com.br/portfolio/oloo-bar-lasca-studio', name: 'jotaoshiro.com.br', category: 'Weby Agentur' },
+  { url: 'https://www.ethanchng.com/apple', name: 'ethanchng.com', category: 'Weby Agentur' },
+  { url: 'https://analogueagency.com/cases-overview', name: 'analogueagency.com', category: 'Weby Agentur' },
+  { url: 'https://www.kunalbelamkar.design/', name: 'kunalbelamkar.design', category: 'Weby Agentur' },
+  { url: 'https://www.outpost.design/', name: 'outpost.design', category: 'Weby Agentur' },
+  { url: 'https://raggededge.com/', name: 'raggededge.com', category: 'Weby Agentur' },
+  { url: 'https://www.artistsweb.com/', name: 'artistsweb.com', category: 'Weby Agentur' },
+  { url: 'https://polar.ltda/', name: 'polar.ltda', category: 'Weby Agentur' },
+  { url: 'https://ena.supply/', name: 'ena.supply', category: 'Weby Agentur' },
+  { url: 'https://ed.studio/', name: 'ed.studio', category: 'Weby Agentur' },
+  { url: 'https://mymind.com/', name: 'mymind.com', category: 'Weby Agentur' },
+  { url: 'https://www.wediscover.com.au/', name: 'wediscover.com.au', category: 'Weby Agentur' },
+  { url: 'https://www.match.studio/works/molino-pasini', name: 'match.studio', category: 'Weby Agentur' },
+  { url: 'https://www.widelab.co/', name: 'widelab.co', category: 'Weby Agentur' },
+  { url: 'https://parker.studio/', name: 'parker.studio', category: 'Weby Agentur' },
+  { url: 'https://jarcos.work/projeto/sm2', name: 'jarcos.work', category: 'Weby Agentur' },
+  { url: 'https://imandelic.com/socks-w/', name: 'imandelic.com', category: 'Weby Agentur' },
+  { url: 'https://vanschneider.com/mars2020', name: 'vanschneider.com', category: 'Weby Agentur' },
+  { url: 'https://www.are.na/gagewente-subcollections/free-type-foundries', name: 'are.na', category: 'Weby Agentur' },
+  { url: 'https://bakkenbaeck.com/case/circle', name: 'bakkenbaeck.com', category: 'Weby Agentur' },
+  { url: 'https://www.callbruno.com/', name: 'callbruno.com', category: 'Weby Agentur' },
+  { url: 'https://www.vrtlwrld.io/', name: 'vrtlwrld.io', category: 'Weby Agentur' },
+  { url: 'https://creepy.cz/', name: 'creepy.cz', category: 'Weby Agentur' },
+  { url: 'http://www.reesaw.com/', name: 'reesaw.com', category: 'Weby Agentur' },
+  { url: 'https://www.griflan.com/', name: 'griflan.com', category: 'Weby Agentur' },
+  { url: 'https://designoneforme.com/', name: 'designoneforme.com', category: 'Weby Agentur' },
+  { url: 'https://ony.agency/', name: 'ony.agency', category: 'Weby Agentur' },
+  { url: 'https://www.match.studio/', name: 'match.studio', category: 'Weby Agentur' },
+  { url: 'https://www.joinflowparty.com/', name: 'joinflowparty.com', category: 'Weby Agentur' },
+  { url: 'https://robertborghesi.is/', name: 'robertborghesi.is', category: 'Weby Agentur' },
+  { url: 'https://prand-n.ava-case.com/', name: 'prand-n.ava-case.com', category: 'Weby Agentur' },
+  { url: 'https://www.redis.agency/', name: 'redis.agency', category: 'Weby Agentur' },
+  { url: 'https://newpeace.jp/', name: 'newpeace.jp', category: 'Weby Agentur' },
+  { url: 'https://www.steezy.studio/studio', name: 'steezy.studio', category: 'Weby Agentur' },
+  { url: 'https://www.squareblack.com/', name: 'squareblack.com', category: 'Weby Agentur' },
+  { url: 'https://aaronpoeandco.com/', name: 'aaronpoeandco.com', category: 'Weby Agentur' },
+  { url: 'https://studiovoila.com/projects/upstack', name: 'studiovoila.com', category: 'Weby Agentur' },
+  { url: 'https://likely-story.co.uk/', name: 'likely-story.co.uk', category: 'Weby Agentur' },
+  { url: 'https://boldscandinavia.com/', name: 'boldscandinavia.com', category: 'Weby Agentur' },
+  { url: 'https://doberman.co/', name: 'doberman.co', category: 'Weby Agentur' },
+  { url: 'https://turnerduckworth.com/work/sprite', name: 'turnerduckworth.com', category: 'Weby Agentur' },
+  { url: 'https://together.agency/?utm_source=clutch.co&utm_medium=referral&utm_campaign=agencies-branding-new-york', name: 'together.agency', category: 'Weby Agentur' },
+  { url: 'https://www.violaineetjeremy.fr/', name: 'violaineetjeremy.fr', category: 'Weby Agentur' },
+  { url: 'https://www.motherdesign.com/work/selfridges/', name: 'motherdesign.com', category: 'Weby Agentur' },
+  { url: 'https://www.astridmottes.com/', name: 'astridmottes.com', category: 'Weby Agentur' },
+  { url: 'https://henceforth.com/#projects', name: 'henceforth.com', category: 'Weby Agentur', note: 'Sky city' },
+  { url: 'https://mayda.co/', name: 'mayda.co', category: 'Weby Agentur' },
+  { url: 'https://www.herecreative.co/', name: 'herecreative.co', category: 'Weby Agentur' },
+  { url: 'https://fonsmans.com/', name: 'fonsmans.com', category: 'Weby Agentur' },
+  { url: 'https://works.studio/', name: 'works.studio', category: 'Weby Agentur', note: 'Old money' },
+  { url: 'https://www.madebysix.com/', name: 'madebysix.com', category: 'Weby Agentur' },
+  { url: 'https://fiveyears.portorocha.com/', name: 'fiveyears.portorocha.com', category: 'Weby Agentur' },
+  { url: 'https://superlative.works/', name: 'superlative.works', category: 'Weby Agentur', note: 'CZ' },
+  { url: 'https://works.studio/ideas/growth-by-design', name: 'works.studio', category: 'Weby Agentur', note: 'Classy' },
+  { url: 'https://zeusjones.com/work/ecolab', name: 'zeusjones.com', category: 'Weby Agentur' },
+  { url: 'https://r-c.work/', name: 'r-c.work', category: 'Weby Agentur' },
+  { url: 'https://www.primary.studio/', name: 'primary.studio', category: 'Weby Agentur' },
+  { url: 'https://legora.com/', name: 'legora.com', category: 'Weby Agentur' },
+  { url: 'https://hellodani.co/', name: 'hellodani.co', category: 'Weby Agentur' },
+  { url: 'https://www.pudding.studio/', name: 'pudding.studio', category: 'Weby Agentur' },
+  { url: 'https://www.papertiger.com/', name: 'papertiger.com', category: 'Weby Agentur' },
+  { url: 'https://goodhabit.studio/', name: 'goodhabit.studio', category: 'Weby Agentur' },
+  { url: 'https://www.visualdomain.com.au/', name: 'visualdomain.com.au', category: 'Weby Agentur' },
+  { url: 'https://13322566869.com/', name: '13322566869.com', category: 'Weby Agentur' },
+  { url: 'https://www.foll-ow.com/home', name: 'foll-ow.com', category: 'Weby Agentur' },
+  { url: 'https://tigranz.com/', name: 'tigranz.com', category: 'Weby Agentur' },
+  { url: 'https://dialeto.studio/', name: 'dialeto.studio', category: 'Weby Agentur' },
+  { url: 'https://www.daybreak.studio/', name: 'daybreak.studio', category: 'Weby Agentur' },
+  { url: 'https://www.oyedrops.studio/work/microlog', name: 'oyedrops.studio', category: 'Weby Agentur' },
+  { url: 'https://vucko.co/projects/', name: 'vucko.co', category: 'Weby Agentur' },
+  { url: 'https://mouthwash.studio/project/cover/', name: 'mouthwash.studio', category: 'Weby Agentur' },
+  { url: 'https://studiodon.co/', name: 'studiodon.co', category: 'Weby Agentur' },
+  { url: 'https://design.cash.app/lifestyle', name: 'design.cash.app', category: 'Weby Agentur' },
+  { url: 'https://www.wearecollins.com/', name: 'wearecollins.com', category: 'Weby Agentur' },
+  { url: 'https://oker.com/', name: 'oker.com', category: 'Weby Agentur' },
+  { url: 'https://interbrand.com/work/bugatti_brandidentity_corporatedesign/', name: 'interbrand.com', category: 'Weby Agentur' },
+  { url: 'https://takeagander.com/', name: 'takeagander.com', category: 'Weby Agentur' },
+  { url: 'https://fold7.com/', name: 'fold7.com', category: 'Weby Agentur' },
+  { url: 'https://xander.xyz/', name: 'xander.xyz', category: 'Weby Agentur' },
+  { url: 'https://studiorotate.com/work/loewe', name: 'studiorotate.com', category: 'Weby Agentur' },
+  { url: 'https://www.abhijitrout.in/', name: 'abhijitrout.in', category: 'Weby Agentur' },
+  { url: 'https://order.design/', name: 'order.design', category: 'Weby Agentur' },
+  { url: 'https://matchstic.com/', name: 'matchstic.com', category: 'Weby Agentur' },
+  { url: 'https://wearemotto.com/', name: 'wearemotto.com', category: 'Weby Agentur' },
+  { url: 'https://www.atla.design/', name: 'atla.design', category: 'Weby Agentur' },
+  { url: 'https://www.joediver.co/', name: 'joediver.co', category: 'Weby Agentur' },
+  { url: 'https://uninspired.studio/', name: 'uninspired.studio', category: 'Weby Agentur' },
+  { url: 'https://www.designjoy.co/', name: 'designjoy.co', category: 'Weby Agentur' },
+  { url: 'https://ed.studio/work/sjb/', name: 'ed.studio', category: 'Weby Agentur' },
+  { url: 'https://www.apollo.io/', name: 'apollo.io', category: 'Weby Agentur' },
+  { url: 'https://www.kurppahosk.com/work/xxl', name: 'kurppahosk.com', category: 'Weby Agentur' },
+  { url: 'https://without.studio/', name: 'without.studio', category: 'Weby Agentur' },
+  { url: 'https://how.studio/', name: 'how.studio', category: 'Weby Agentur' },
+  { url: 'https://harryjatkins.com/', name: 'harryjatkins.com', category: 'Weby Agentur' },
+  { url: 'https://id-c.se/archive/', name: 'id-c.se', category: 'Weby Agentur' },
+  { url: 'https://brand.ai/', name: 'brand.ai', category: 'Weby Agentur' },
+  { url: 'https://www.raredays.com/', name: 'raredays.com', category: 'Weby Agentur' },
+  { url: 'https://www.hirey.io/', name: 'hirey.io', category: 'Weby Agentur' },
+  { url: 'https://www.phantom.land/about/agency', name: 'phantom.land', category: 'Weby Agentur' },
+  { url: 'https://tars.pro/', name: 'tars.pro', category: 'Weby Agentur' },
+  { url: 'https://casabien.com/', name: 'casabien.com', category: 'Weby Agentur' },
+  { url: 'https://martinbriceno.xyz/', name: 'martinbriceno.xyz', category: 'Weby Agentur' },
+  { url: 'https://www.conscious-shell.com/work/att', name: 'conscious-shell.com', category: 'Weby Agentur' },
+  { url: 'https://os.ryo.lu/', name: 'os.ryo.lu', category: 'Weby Agentur' },
+  { url: 'https://work.ryo.lu/?v=136b038e2bab48c59e46c8e3ab8e7e3f&p=46778b6685224249995f08315963116a&pm=c', name: 'work.ryo.lu', category: 'Weby Agentur' },
+  { url: 'https://houstongroup.com.au/', name: 'houstongroup.com.au', category: 'Weby Agentur' },
+  { url: 'https://robclarke.com/', name: 'robclarke.com', category: 'Weby Agentur' },
+  { url: 'https://www.motherdesign.com/work/fhirst', name: 'motherdesign.com', category: 'Weby Agentur' },
+  { url: 'https://dbco.online/', name: 'dbco.online', category: 'Weby Agentur' },
+  { url: 'https://www.sprintdept.com/', name: 'sprintdept.com', category: 'Weby Agentur' },
+  { url: 'https://www.sochor.xyz/work/pebble-life', name: 'sochor.xyz', category: 'Weby Agentur', note: 'Czech cool' },
+  { url: 'https://www.krystofjezek.com/', name: 'krystofjezek.com', category: 'Weby Agentur', note: 'Czech cool mockups' },
+  { url: 'https://www.otherkind.design/', name: 'otherkind.design', category: 'Weby Agentur' },
+  { url: 'https://www.itsoffbrand.com/our-work/vizcom', name: 'itsoffbrand.com', category: 'Weby Agentur' },
+  { url: 'https://www.agencefoudre.com/', name: 'agencefoudre.com', category: 'Weby Agentur' },
+  { url: 'https://outpost.design/work/above-the-clouds/', name: 'outpost.design', category: 'Weby Agentur' },
+  { url: 'https://www.early.works/', name: 'early.works', category: 'Weby Agentur' },
+  { url: 'https://holcombstudio.com/', name: 'holcombstudio.com', category: 'Cool weby' },
+  { url: 'https://www.opendue.com/', name: 'opendue.com', category: 'Cool weby' },
+  { url: 'https://oatside.com/', name: 'oatside.com', category: 'Cool weby' },
+  { url: 'https://gocardless.com/', name: 'gocardless.com', category: 'Cool weby' },
+  { url: 'https://wise.com/us/', name: 'wise.com', category: 'Cool weby' },
+  { url: 'https://deepmind.google/technologies/gemini/#introduction', name: 'deepmind.google', category: 'Cool weby' },
+  { url: 'https://thewebshowcase.withgoogle.com/?_gl=1*b89f10*_up*MQ', name: 'thewebshowcase.withgoogle.com', category: 'Cool weby' },
+  { url: 'https://easyplant.com/', name: 'easyplant.com', category: 'Cool weby' },
+  { url: 'https://www.architecturaldigest.com/story/solar-panels-cost', name: 'architecturaldigest.com', category: 'Cool weby' },
+  { url: 'https://eraceramics.com/process/#contact', name: 'eraceramics.com', category: 'Cool weby' },
+  { url: 'https://bewellbykelly.com/', name: 'bewellbykelly.com', category: 'Cool weby' },
+  { url: 'https://natoora.com/en-GB/', name: 'natoora.com', category: 'Cool weby' },
+  { url: 'https://www.stacks.co/explore/discover-apps', name: 'Discover apps', category: 'Cool weby' },
+  { url: 'https://stacking.club/', name: 'stacking.club', category: 'Cool weby' },
+  { url: 'https://hinter.com/', name: 'hinter.com', category: 'Cool weby' },
+  { url: 'https://www.cherrypick.co/', name: 'cherrypick.co', category: 'Cool weby' },
+  { url: 'https://www.rains.com/?ref=browsingmode.com', name: 'rains.com', category: 'Cool weby' },
+  { url: 'https://drinkvuum.com/?ref=browsingmode.com', name: 'drinkvuum.com', category: 'Cool weby' },
+  { url: 'https://pool.day/', name: 'pool.day', category: 'Cool weby' },
+  { url: 'https://multiversx.com/', name: 'multiversx.com', category: 'Cool weby' },
+  { url: 'https://cryptoinvoice.new/', name: 'cryptoinvoice.new', category: 'Cool weby' },
+  { url: 'https://boutique-homes.com/', name: 'boutique-homes.com', category: 'Cool weby' },
+  { url: 'https://programa.design/', name: 'programa.design', category: 'Cool weby' },
+  { url: 'https://cuid.mx/', name: 'cuid.mx', category: 'Cool weby' },
+  { url: 'https://livekindred.com/', name: 'livekindred.com', category: 'Cool weby' },
+  { url: 'https://www.behance.net/gallery/192149509/Services-Marketplace-App-Design?tracking_source=curated_galleries_ui-ux', name: 'behance.net', category: 'Cool weby', note: 'Super cool clean' },
+  { url: 'https://www.behance.net/gallery/152163081/Onok-Website?tracking_source=curated_galleries_ui-ux', name: 'behance.net', category: 'Cool weby', note: 'Clean' },
+  { url: 'https://www.candidco.com/', name: 'candidco.com', category: 'Cool weby' },
+  { url: 'https://www.streetbeat.com/en', name: 'streetbeat.com', category: 'Cool weby' },
+  { url: 'https://mangopay.com/en-gb', name: 'mangopay.com', category: 'Cool weby' },
+  { url: 'https://ramp.com/welcome', name: 'ramp.com', category: 'Cool weby' },
+  { url: 'https://thisismagma.com/', name: 'thisismagma.com', category: 'Cool weby' },
+  { url: 'https://kzero.com/', name: 'kzero.com', category: 'Cool weby' },
+  { url: 'https://spacecadet.ventures/', name: 'spacecadet.ventures', category: 'Cool weby' },
+  { url: 'https://www.flysociety.com/', name: 'flysociety.com', category: 'Cool weby' },
+  { url: 'https://www.charlie.com/', name: 'charlie.com', category: 'Cool weby' },
+  { url: 'https://mewsunfold.com/', name: 'mewsunfold.com', category: 'Cool weby' },
+  { url: 'https://www.violetpapers.com/', name: 'violetpapers.com', category: 'Cool weby' },
+  { url: 'https://thickpickle.com/', name: 'thickpickle.com', category: 'Cool weby' },
+  { url: 'https://www.makehrwork.nl/', name: 'makehrwork.nl', category: 'Cool weby' },
+  { url: 'https://www.sugar.health/', name: 'sugar.health', category: 'Cool weby' },
+  { url: 'https://bowery.co/', name: 'bowery.co', category: 'Cool weby' },
+  { url: 'https://oem.care/', name: 'oem.care', category: 'Cool weby' },
+  { url: 'https://www.planeterthos.com/', name: 'planeterthos.com', category: 'Cool weby' },
+  { url: 'https://toyfight.co/', name: 'toyfight.co', category: 'Cool weby' },
+  { url: 'https://www.lemonade.com/', name: 'lemonade.com', category: 'Cool weby' },
+  { url: 'https://orb.club/', name: 'orb.club', category: 'Cool weby' },
+  { url: 'https://louie-london.com/', name: 'louie-london.com', category: 'Cool weby' },
+  { url: 'https://www.theboncollectif.com/', name: 'theboncollectif.com', category: 'Cool weby' },
+  { url: 'https://pebblelife.com/', name: 'pebblelife.com', category: 'Cool weby' },
+  { url: 'https://af1.analogueshop.com/form', name: 'af1.analogueshop.com', category: 'Cool weby' },
+  { url: 'https://www.luminouslabs.health/?r=0', name: 'luminouslabs.health', category: 'Cool weby' },
+  { url: 'https://www.maven11.com/', name: 'maven11.com', category: 'Cool weby' },
+  { url: 'https://und-ny.com/', name: 'und-ny.com', category: 'Cool weby' },
+  { url: 'https://cliikhome.com/', name: 'cliikhome.com', category: 'Cool weby' },
+  { url: 'https://quechua-lookbook.com/ss25/', name: 'quechua-lookbook.com', category: 'Cool weby' },
+  { url: 'https://www.v7labs.com/', name: 'v7labs.com', category: 'Cool weby' },
+  { url: 'https://swehl.com/about/', name: 'swehl.com', category: 'Cool weby' },
+  { url: 'https://cobfoods.com/', name: 'cobfoods.com', category: 'Cool weby' },
+  { url: 'https://www.pludolabs.com/?ref=browsingmode.com', name: 'pludolabs.com', category: 'Cool weby' },
+  { url: 'https://emmpo.com/', name: 'emmpo.com', category: 'Cool weby' },
+  { url: 'https://spotlight.i-d.co/margaretqualley', name: 'spotlight.i-d.co', category: 'Cool weby' },
+  { url: 'https://www.drinkcana.com/', name: 'drinkcana.com', category: 'Cool weby' },
+  { url: 'https://www.craft.do/', name: 'craft.do', category: 'Cool weby' },
+  { url: 'https://www.arqe.ai/', name: 'arqe.ai', category: 'Cool weby' },
+  { url: 'https://www.forhers.com/', name: 'forhers.com', category: 'Cool weby' },
+  { url: 'https://www.euveka.com/', name: 'euveka.com', category: 'Cool weby' },
+  { url: 'https://pressbook.co/', name: 'pressbook.co', category: 'Cool weby' },
+  { url: 'https://www.zerocactus.com/', name: 'zerocactus.com', category: 'Cool tech' },
+  { url: 'https://allfred.io/', name: 'allfred.io', category: 'Cool tech' },
+  { url: 'https://wetransfer.com/explore/products', name: 'wetransfer.com', category: 'Cool tech' },
+  { url: 'https://acctual.com/', name: 'acctual.com', category: 'Cool tech' },
+  { url: 'https://craftable.pro/', name: 'craftable.pro', category: 'Cool tech' },
+  { url: 'https://creativefastaid.com/', name: 'creativefastaid.com', category: 'Cool tech' },
+  { url: 'https://web3auth.io/', name: 'web3auth.io', category: 'Cool tech' },
+  { url: 'https://www.clubrare.xyz/', name: 'clubrare.xyz', category: 'Cool tech' },
+  { url: 'https://podcastle.ai/', name: 'podcastle.ai', category: 'Cool tech' },
+  { url: 'https://sierra.ai/', name: 'sierra.ai', category: 'Cool tech' },
+  { url: 'https://stackerhq.com/', name: 'stackerhq.com', category: 'Cool tech' },
+  { url: 'https://acuityscheduling.com/', name: 'acuityscheduling.com', category: 'Cool tech' },
+  { url: 'https://www.retronovaworld.com/', name: 'retronovaworld.com', category: 'Cool tech' },
+  { url: 'https://www.tedy.app/', name: 'tedy.app', category: 'Cool tech' },
+  { url: 'https://activetheory.net/', name: 'activetheory.net', category: 'Cool tech' },
+  { url: 'https://making.today/', name: 'making.today', category: 'Cool tech' },
+  { url: 'https://jan.ai/', name: 'jan.ai', category: 'Cool tech' },
+  { url: 'https://tatem.com/', name: 'tatem.com', category: 'Cool tech' },
+  { url: 'https://www.cosmos.so/', name: 'cosmos.so', category: 'Cool tech' },
+  { url: 'https://cosmos.network/', name: 'cosmos.network', category: 'Cool tech' },
+  { url: 'https://quantumwallet.tech/', name: 'quantumwallet.tech', category: 'Cool tech' },
+  { url: 'https://carboculture.com/', name: 'carboculture.com', category: 'Cool tech' },
+  { url: 'https://www.raycast.com/', name: 'raycast.com', category: 'Cool tech' },
+  { url: 'https://www.aircompany.com/', name: 'aircompany.com', category: 'Cool tech' },
+  { url: 'https://zentry.com/', name: 'zentry.com', category: 'Cool tech' },
+  { url: 'https://aave.com/', name: 'aave.com', category: 'Cool tech' },
+  { url: 'https://flighty.com/', name: 'flighty.com', category: 'Cool tech' },
+  { url: 'https://www.sketch.com/', name: 'sketch.com', category: 'Cool tech' },
+  { url: 'https://scrintal.com/', name: 'scrintal.com', category: 'Cool tech' },
+  { url: 'https://www.popcorn.space/', name: 'popcorn.space', category: 'Cool tech' },
+  { url: 'https://sortui.company/', name: 'sortui.company', category: 'Cool tech' },
+  { url: 'https://daylightcomputer.com/', name: 'daylightcomputer.com', category: 'Cool tech' },
+  { url: 'https://augen.pro/', name: 'augen.pro', category: 'Cool tech' },
+  { url: 'https://www.grids.bio/', name: 'grids.bio', category: 'Cool tech' },
+  { url: 'https://fabric.so/', name: 'fabric.so', category: 'Cool tech' },
+  { url: 'https://mymind.com/mobile', name: 'mymind.com', category: 'Cool tech' },
+  { url: 'https://usetola.com/', name: 'usetola.com', category: 'Cool tech' },
+  { url: 'https://evmos.org/', name: 'evmos.org', category: 'Cool tech' },
+  { url: 'https://abduzeedo.com/cyberpunk-motion-design', name: 'abduzeedo.com', category: 'Cool tech' },
+  { url: 'https://www.arttechreport.com/', name: 'arttechreport.com', category: 'Cool tech' },
+  { url: 'https://evervault.com/solutions/file-encryption', name: 'evervault.com', category: 'Cool tech' },
+  { url: 'https://okcest.cool/', name: 'okcest.cool', category: 'Cool tech' },
+  { url: 'https://amaterasu.ai/', name: 'amaterasu.ai', category: 'Cool tech' },
+  { url: 'https://tuple.app/', name: 'tuple.app', category: 'Cool tech' },
+  { url: 'https://www.eci.io/', name: 'eci.io', category: 'Cool tech' },
+  { url: 'https://lovi.care/', name: 'lovi.care', category: 'Cool tech' },
+  { url: 'https://www.dora.run/ai', name: 'dora.run', category: 'Cool tech' },
+  { url: 'https://www.makingsoftware.com/', name: 'makingsoftware.com', category: 'Cool tech' },
+  { url: 'https://www.airloom.energy/', name: 'airloom.energy', category: 'Cool tech' },
+  { url: 'https://www.cultureamp.com/', name: 'cultureamp.com', category: 'Cool tech' },
+  { url: 'https://dance.co/', name: 'dance.co', category: 'Cool tech' },
+  { url: 'https://www.wittl.co/', name: 'wittl.co', category: 'Cool tech' },
+  { url: 'https://at.nothing.tech/', name: 'at.nothing.tech', category: 'Cool tech' },
+  { url: 'https://www.musesoftware.ai/', name: 'musesoftware.ai', category: 'Cool tech' },
+  { url: 'https://getanchor.co/', name: 'getanchor.co', category: 'Cool tech' },
+  { url: 'https://dreamrecorder.ai/?ref=siteinspire', name: 'dreamrecorder.ai', category: 'Cool tech' },
+  { url: 'https://maggie-app.com/', name: 'maggie-app.com', category: 'Cool tech' },
+  { url: 'https://telescope.fyi/', name: 'telescope.fyi', category: 'Cool tech' },
+  { url: 'https://support.uniswap.org/hc/en-us', name: 'support.uniswap.org', category: 'Cool tech' },
+  { url: 'https://rivian.com/en-GB', name: 'rivian.com', category: 'Cool tech' },
+  { url: 'https://arie.guide/', name: 'arie.guide', category: 'Cool tech' },
+  { url: 'https://www.inflight.co/', name: 'inflight.co', category: 'Cool tech' },
+  { url: 'https://business.jupi.co/', name: 'business.jupi.co', category: 'Cool tech' },
+  { url: 'https://espaciolanube.com/product/nube01', name: 'espaciolanube.com', category: 'Cool tech' },
+  { url: 'https://retronovaworld.webflow.io/', name: 'retronovaworld.webflow.io', category: 'Cool tech' },
+  { url: 'https://uxmachina.co/en', name: 'uxmachina.co', category: 'Cool tech' },
+  { url: 'https://www.kled.ai/', name: 'kled.ai', category: 'Cool tech' },
+  { url: 'https://www.perk.com/', name: 'perk.com', category: 'Cool tech' },
+  { url: 'https://www.wordware.ai/', name: 'wordware.ai', category: 'Cool tech' },
+  { url: 'https://www.foreplay.co/', name: 'foreplay.co', category: 'Cool tech' },
+  { url: 'https://www.altaares.com/', name: 'altaares.com', category: 'Cool tech' },
+  { url: 'https://www.heyquin.io/', name: 'heyquin.io', category: 'Cool tech' },
+  { url: 'https://vizcom.com/', name: 'vizcom.com', category: 'Cool tech' },
+  { url: 'https://attio.com/', name: 'attio.com', category: 'Cool tech' },
+  { url: 'https://www.sakara.com/', name: 'sakara.com', category: 'Cool nature' },
+  { url: 'https://thetinypod.com/', name: 'thetinypod.com', category: 'Cool nature' },
+  { url: 'https://conversion.design/', name: 'conversion.design', category: 'Conversion' },
+  { url: 'https://sugar-app.webflow.io/', name: 'sugar-app.webflow.io', category: 'Cool - Health' },
+  { url: 'https://www.active-hop.com/about', name: 'active-hop.com', category: 'Cool - Health' },
+  { url: 'https://www.behance.net/gallery/192019331/Packsmith?tracking_source=best_of_behance', name: 'behance.net', category: 'Cool - homes' },
+  { url: 'https://masterandmaster.eu/', name: 'masterandmaster.eu', category: 'Cool - homes' },
+  { url: 'https://www.mmcite.com/', name: 'mmcite.com', category: 'Cool - homes' },
+  { url: 'https://www.fashion-line.eu/', name: 'fashion-line.eu', category: 'Cool - homes' },
+  { url: 'https://www.wrightsferrymansion.org/', name: 'wrightsferrymansion.org', category: 'Cool - homes' },
+  { url: 'https://www.gendo.ai/', name: 'gendo.ai', category: 'Cool - homes' },
+  { url: 'https://paradiso-villa.webflow.io/interior', name: 'paradiso-villa.webflow.io', category: 'Cool - homes' },
+  { url: 'https://www.skycityvillas.cz/', name: 'skycityvillas.cz', category: 'Cool - homes' },
+  { url: 'https://www.strawberryhotels.com/about/', name: 'strawberryhotels.com', category: 'Cool - homes' },
+  { url: 'https://www.cozey.com/', name: 'cozey.com', category: 'Cool - homes' },
+  { url: 'https://www.thuma.co/', name: 'thuma.co', category: 'Cool - homes' },
+  { url: 'https://store.leibal.com/', name: 'store.leibal.com', category: 'Cool - homes' },
+  { url: 'https://fredhome.com.au/', name: 'fredhome.com.au', category: 'Cool - homes' },
+  { url: 'https://www.sundays-company.com/', name: 'sundays-company.com', category: 'Cool - homes' },
+  { url: 'https://www.samara.com/', name: 'samara.com', category: 'Cool - homes' },
+  { url: 'https://buildcover.com/', name: 'buildcover.com', category: 'Cool - homes' },
+  { url: 'https://www.pretty-hotels.com/?lang=en', name: 'pretty-hotels.com', category: 'Cool - homes' },
+  { url: 'https://www.mews.com/en', name: 'mews.com', category: 'Cool - homes' },
+  { url: 'https://lightshiprv.com/', name: 'lightshiprv.com', category: 'Cool - homes' },
+  { url: 'https://www.bolia.com/en/', name: 'bolia.com', category: 'Cool - homes' },
+  { url: 'https://unito.shop/', name: 'unito.shop', category: 'Cool - homes' },
+  { url: 'https://buildcover.com/our-process/', name: 'buildcover.com', category: 'Cool - homes' },
+  { url: 'https://pebblelife.com/build', name: 'pebblelife.com', category: 'Cool - homes' },
+  { url: 'https://www.grau.art/', name: 'grau.art', category: 'Cool - homes' },
+  { url: 'https://www.oharchitecture.com.au/', name: 'oharchitecture.com.au', category: 'Cool - homes' },
+  { url: 'https://kavehome.com/en/en', name: 'kavehome.com', category: 'Cool - homes' },
+  { url: 'https://www.jonite.com/', name: 'jonite.com', category: 'Cool - homes' },
+  { url: 'https://quietcubes.com/', name: 'quietcubes.com', category: 'Cool - homes' },
+  { url: 'https://fuji.halfof8.com/', name: 'fuji.halfof8.com', category: 'Cool - homes' },
+  { url: 'https://ownprimland.com/', name: 'ownprimland.com', category: 'Cool - homes' },
+  { url: 'https://culturspace.com/collections/spring-25', name: 'culturspace.com', category: 'Cool weby - Fashion' },
+  { url: 'https://www.osklen.com/', name: 'osklen.com', category: 'Cool weby - Fashion' },
+  { url: 'https://systemelab.com/', name: 'systemelab.com', category: 'Cool weby - Fashion' },
+  { url: 'https://swehl.com/', name: 'swehl.com', category: 'E-commerce' },
+  { url: 'https://bedintentions.com/', name: 'bedintentions.com', category: 'E-commerce' },
+  { url: 'https://kravebeauty.com/', name: 'kravebeauty.com', category: 'E-commerce' },
+  { url: 'https://www.graza.co/', name: 'graza.co', category: 'Cool - Food' },
+  { url: 'https://savor.it/', name: 'savor.it', category: 'Cool - Food' },
+  { url: 'https://www.parthean.com/advisors', name: 'parthean.com', category: 'Cool - Finance' },
+  { url: 'https://www.kikin.io/', name: 'kikin.io', category: 'Cool - Finance' },
+  { url: 'https://www.omadagame.com/', name: 'omadagame.com', category: 'Cool - Finance' },
+  { url: 'https://www.lemonsqueezy.com/', name: 'lemonsqueezy.com', category: 'Cool - Finance' },
+  { url: 'https://ctrl.xyz/', name: 'ctrl.xyz', category: 'Cool - Finance' },
+  { url: 'https://www.leya.law/security', name: 'leya.law', category: 'Cool - Finance' },
+  { url: 'https://legend.xyz/', name: 'legend.xyz', category: 'Cool - Finance' },
+  { url: 'https://fin.ai/', name: 'fin.ai', category: 'Cool - Finance' },
+  { url: 'https://fluz.app/us', name: 'fluz.app', category: 'Cool - Finance' },
+  { url: 'https://ugly.cash/', name: 'ugly.cash', category: 'Cool - Finance' },
+  { url: 'https://the-brandidentity.com/news/goodbye-the-mockups-hello-the-brand-identity-store-home-to-the-very-best-mockups-books-and-more', name: 'the-brandidentity.com', category: 'Vzdělávání' },
+  { url: 'https://developer.apple.com/design/human-interface-guidelines/designing-for-macos', name: 'developer.apple.com', category: 'Vzdělávání' },
+  { url: 'https://brandingstyleguides.com/', name: 'brandingstyleguides.com', category: 'Vzdělávání' },
+  { url: 'https://builtformars.com/case-studies?variables=e30%3D', name: 'builtformars.com', category: 'Vzdělávání' },
+  { url: 'https://hype4.academy/', name: 'hype4.academy', category: 'Vzdělávání' },
+  { url: 'https://quantumgrowth.kingkong.com.au/login', name: 'quantumgrowth.kingkong.com.au', category: 'Vzdělávání' },
+  { url: 'https://smith-diction.com/', name: 'smith-diction.com', category: 'Vzdělávání' },
+  { url: 'https://brand.squarespace.com/', name: 'brand.squarespace.com', category: 'Brand' },
+  { url: 'https://www.kikk.be/', name: 'kikk.be', category: 'Event' },
+  { url: 'https://www.instagram.com/p/C2NF64tiik-/?img_index=5', name: 'instagram.com', category: 'Instagram' },
+  { url: 'https://the-brandidentity.com/store/product/macbook-pro-mockup-10', name: 'the-brandidentity.com', category: 'Mockups', note: '[https://the-brandidentity.com/store/product/macbook-pro-mockup-10](https://the-brandidentity.com/store/product/macbook-pro-mockup-10' },
+  { url: 'https://the-brandidentity.com/store', name: 'the-brandidentity.com', category: 'Mockups' },
+  { url: 'https://www.akoyastudio.com/shop/p/devicemockup15', name: 'akoyastudio.com', category: 'Mockups' },
+  { url: 'https://layers.design/', name: 'layers.design', category: 'Mockups' },
+  { url: 'https://mockups.directory/collections/free', name: 'mockups.directory', category: 'Mockups' },
+  { url: 'https://mockup.maison/', name: 'mockup.maison', category: 'Mockups' },
+  { url: 'https://www.akoyastudio.com/', name: 'akoyastudio.com', category: 'Mockups' },
+  { url: 'https://www.moyo-studio.com/products/', name: 'moyo-studio.com', category: 'Mockups' },
+  { url: 'https://creatoom.com/', name: 'creatoom.com', category: 'Mockups' },
+  { url: 'https://medium.com/smith-diction/trust-the-process-97ac8999d56a', name: 'medium.com', category: 'Mockups' },
+  { url: 'https://arpitbrandings.in/store/', name: 'arpitbrandings.in', category: 'Mockups' },
+  { url: 'https://designsystems.surf/', name: 'designsystems.surf', category: 'Systems' },
+  { url: 'https://www.darkmodedesign.com/', name: 'darkmodedesign.com', category: 'Systems' },
+  { url: 'https://gsap.com/showcase/?page=1', name: 'gsap.com', category: 'Systems' },
+  { url: 'https://ultra-kuhl.com/en/collections', name: 'ultra-kuhl.com', category: 'Fonty' },
+  { url: 'https://fontsinuse.com/uses/58076/semihandmade-logo-and-website', name: 'fontsinuse.com', category: 'Fonty' },
+  { url: 'https://displaay.net/typeface/avantt/', name: 'displaay.net', category: 'Fonty' },
+  { url: 'https://www.collletttivo.it/typefaces/apfel-grotezk', name: 'collletttivo.it', category: 'Fonty' },
+  { url: 'https://mixtiles.com/', name: 'mixtiles.com', category: 'Fonty' },
+  { url: 'https://www.weltkern.com/shop/detail-typeface/lausanne', name: 'weltkern.com', category: 'Fonty' },
+  { url: 'https://www.typografische.com/typefaces/fh-lecturis', name: 'typografische.com', category: 'Fonty' },
+  { url: 'https://typetype.org/fonts/tt-hoves/', name: 'typetype.org', category: 'Fonty' },
+  { url: 'https://maxitype.com/typeface/selecta/', name: 'maxitype.com', category: 'Fonty' },
+  { url: 'https://extraset.ch/typefaces/build/', name: 'extraset.ch', category: 'Fonty' },
+  { url: 'https://fontsinuse.com/uses/9523/new-york-magazine-1980-81', name: 'fontsinuse.com', category: 'Fonty' },
+  { url: 'https://www.blankstreet.com/en-GB', name: 'blankstreet.com', category: 'Fonty' },
+  { url: 'https://fonts.floriankarsten.com/trials', name: 'fonts.floriankarsten.com', category: 'Fonty' },
+  { url: 'https://www.kometa.xyz/', name: 'kometa.xyz', category: 'Fonty' },
+  { url: 'https://fonts.mojomox.com/', name: 'fonts.mojomox.com', category: 'Fonty' },
+  { url: 'https://initiatearchitecture.com/products/notion-client-portal', name: 'initiatearchitecture.com', category: 'Notion' },
+  { url: 'https://mobbin.com/', name: 'mobbin.com', category: 'Inspirace' },
+  { url: 'https://skillbox.ru/course/profession-graphdesigner/', name: 'skillbox.ru', category: 'Inspirace' },
+  { url: 'https://refero.design/apps', name: 'refero.design', category: 'Inspirace' },
+  { url: 'https://www.behance.net/gallery/150274277/Silo?tracking_source=search_projects%7Csilo&l=1', name: 'behance.net', category: 'Inspirace' },
+  { url: 'https://www.underconsideration.com/brandnew/', name: 'underconsideration.com', category: 'Inspirace' },
+  { url: 'https://browsingmode.com/', name: 'browsingmode.com', category: 'Inspirace' },
+  { url: 'https://www.instagram.com/mymind/', name: 'instagram.com', category: 'Inspirace' },
+  { url: 'https://winners.webbyawards.com/', name: 'winners.webbyawards.com', category: 'Inspirace' },
+  { url: 'https://designvault.io/', name: 'designvault.io', category: 'Inspirace' },
+  { url: 'https://www.checklist.design/topics/dark-mode', name: 'checklist.design', category: 'Inspirace' },
+  { url: 'https://savee.it/course/', name: 'savee.it', category: 'Inspirace' },
+  { url: 'https://www.curationofcurations.com/Design-Entrepreneurship', name: 'curationofcurations.com', category: 'Inspirace' },
+  { url: 'https://60fps.design/', name: '60fps.design', category: 'Inspirace' },
+  { url: 'https://vsk.world/', name: 'vsk.world', category: 'Inspirace' },
+  { url: 'https://www.osmo.supply/', name: 'osmo.supply', category: 'Inspirace' },
+  { url: 'https://resources.supply/', name: 'resources.supply', category: 'Inspirace' },
+  { url: 'https://thetoolbox.art/', name: 'thetoolbox.art', category: 'Inspirace' },
+  { url: 'https://www.schema.supply/inspiration', name: 'schema.supply', category: 'Inspirace' },
+  { url: 'https://the-brandidentity.com/project/koto-dials-everyday-life-up-to-11-in-its-maximalist-identity-system-for-collaborative-app-fluz', name: 'the-brandidentity.com', category: 'Inspirace' },
+  { url: 'https://rico.supply/', name: 'rico.supply', category: 'Inspirace' },
+  { url: 'https://visuelle.co.uk/', name: 'visuelle.co.uk', category: 'Inspirace' },
+  { url: 'https://www.a1.gallery/', name: 'a1.gallery', category: 'Inspirace' },
+  { url: 'https://design.cash.app/', name: 'design.cash.app', category: 'Inspirace' },
+  { url: 'https://uxdesign.cc/what-replika-gets-right-wrong-and-fiercely-profitable-54ee0aabb639', name: 'uxdesign.cc', category: 'Inspirace' },
+  { url: 'https://ux-news.com/tiktok-expands-personalization-features-to-provide-more-customized-feed-recommendations/', name: 'ux-news.com', category: 'Inspirace' },
+  { url: 'https://www.itsnicethat.com/graphic-design', name: 'itsnicethat.com', category: 'Inspirace' },
+  { url: 'https://www.creativeboom.com/', name: 'creativeboom.com', category: 'Inspirace' },
+  { url: 'https://designeverywhere.co/', name: 'designeverywhere.co', category: 'Inspirace' },
+  { url: 'https://theindex.website/', name: 'theindex.website', category: 'Inspirace' },
+  { url: 'https://visuelle.co.uk/?_sft_category=podcast', name: 'visuelle.co.uk', category: 'Inspirace' },
+  { url: 'https://public.work/car', name: 'public.work', category: 'Inspirace' },
+  { url: 'https://www.achangeofbrand.com/episodes/herman-miller', name: 'achangeofbrand.com', category: 'Inspirace' },
+  { url: 'https://www.uxtools.co/blog/the-only-ai-workflow-i-use-in-production', name: 'uxtools.co', category: 'Inspirace' },
+  { url: 'https://www.streamlinehq.com/freebies', name: 'streamlinehq.com', category: 'Icons' },
+  { url: 'https://www.iconwerk.com/', name: 'iconwerk.com', category: 'Icons' },
+  { url: 'https://iconoir.com/', name: 'iconoir.com', category: 'Icons' },
+  { url: 'https://www.unicorn.studio/dashboard', name: 'https://www.unicorn.studio/dashboard', category: 'AI', note: 'WebGL' },
+  { url: 'https://flora.ai/', name: 'https://flora.ai/', category: 'AI', note: 'Vše cool' },
+  { url: 'https://www.krea.ai/home', name: 'https://www.krea.ai/home', category: 'AI', note: 'Foto' },
+  { url: 'https://www.designarena.ai/', name: 'https://www.designarena.ai/', category: 'AI', note: 'Vše?' },
+  { url: 'https://workers.cloudflare.com/#ai-agents', name: 'https://workers.cloudflare.com/#ai-agents', category: 'Tech', note: 'Hosting' },
+  { url: 'https://rankmath.com', name: 'https://rankmath.com', category: 'Tech', note: 'SEO' },
+  { url: 'https://uiverse.io/elements?search=globe', name: 'https://uiverse.io/elements?search=globe', category: 'Tech', note: '3D' },
+  { url: 'https://codepen.io/ksenia-k/pen/NWERpmb', name: 'https://codepen.io/ksenia-k/pen/NWERpmb', category: 'Tech', note: '3D' },
+  { url: 'https://shaders.paper.design/paper-texture', name: 'https://shaders.paper.design/paper-texture', category: 'Tech', note: 'Paper Shaders' },
+  { url: 'https://mixpanel.com/pricing/', name: 'https://mixpanel.com/pricing/', category: 'Tech', note: 'Analýza' },
+  { url: 'https://linear.app/homepage', name: 'https://linear.app/homepage', category: 'Tech', note: 'Build' },
+  { url: 'https://editor.rive.app/preview/17017-31973-mahindra-be6-website/16195202?mode=animate&artboard=Main&animation=State%20Machine%201', name: 'editor.rive.app', category: 'Animations' },
+  { url: 'https://www.slidddo.com/templates/mobile-pitch-deck-template', name: 'slidddo.com', category: 'Prezentace' },
+  { url: 'https://www.deck.gallery/', name: 'deck.gallery', category: 'Prezentace' },
+  { url: 'https://www.slides.agency/', name: 'slides.agency', category: 'Prezentace' },
+  { url: 'https://www.stills.com/', name: 'stills.com', category: 'Foto' },
+  { url: 'https://visualelectric.com/', name: 'visualelectric.com', category: 'Foto' },
+  { url: 'https://dupephotos.com/home', name: 'dupephotos.com', category: 'Foto' },
+  { url: 'https://www.recraft.ai/', name: 'recraft.ai', category: 'Foto' },
+  { url: 'https://labs.google/fx/tools/image-fx/unsupported-country', name: 'labs.google', category: 'Foto' },
+  { url: 'https://cotypefoundry.com/our-fonts/betatron?ref=uncut.wtf', name: 'cotypefoundry.com', category: 'Foto' },
+  { url: 'https://storytale.io/', name: 'storytale.io', category: 'Ilustrace' },
+  { url: 'https://www.getillustrations.com/', name: 'getillustrations.com', category: 'Ilustrace' },
+  { url: 'https://freeillustrations.xyz/', name: 'freeillustrations.xyz', category: 'Ilustrace' },
+  { url: 'https://illustrationsuniverse.com/', name: 'illustrationsuniverse.com', category: 'Ilustrace' },
+  { url: 'https://atipoillustrations.com/', name: 'atipoillustrations.com', category: 'Ilustrace' },
+  { url: 'https://www.formfrom.design/illustration-pack/delivery', name: 'formfrom.design', category: 'Ilustrace' },
+  { url: 'https://www.carlhauser.com/', name: 'carlhauser.com', category: 'Ilustrace' },
+  { url: 'https://www.thiings.co/things', name: 'thiings.co', category: 'Ilustrace' },
+  { url: 'https://www.youtube.com/watch?v=NiN8nBUsFIk', name: 'youtube.com', category: 'YouTube', note: 'Vlog creation' },
+  { url: 'https://www.youtube.com/watch?v=fzV7Hqn2o9U', name: 'youtube.com', category: 'YouTube', note: 'Aesthetics' },
+  { url: 'https://www.youtube.com/@vuhlandes/videos', name: 'youtube.com', category: 'YouTube', note: 'Quality' },
+  { url: 'https://www.youtube.com/watch?v=R0F2oTs_tMs', name: 'youtube.com', category: 'YouTube', note: 'Personal brand' },
+  { url: 'https://www.youtube.com/watch?v=7lUHXAIotPA', name: 'youtube.com', category: 'YouTube', note: 'Productive day NYC' },
+  { url: 'https://www.youtube.com/watch?v=S7EsFjM41jc', name: 'youtube.com', category: 'YouTube', note: 'How creator will gain' },
+  { url: 'https://www.youtube.com/watch?v=dXs-EP8rDH8', name: 'youtube.com', category: 'YouTube', note: 'How to present work' },
+  { url: 'https://www.youtube.com/watch?v=mD3Q2fYmaMA', name: 'youtube.com', category: 'YouTube' },
+  { url: 'https://wannathis.one/', name: 'wannathis.one', category: 'Elementy' },
+  { url: 'https://www.thesigma.co/', name: 'thesigma.co', category: 'Elementy' },
+  { url: 'https://standards.site/case-studies/herman-miller/', name: 'standards.site', category: 'Elementy' },
+  { url: 'https://momentum.uninspired.studio/login', name: 'momentum.uninspired.studio', category: 'Elementy' },
+  { url: 'https://supply.family/', name: 'supply.family', category: 'Elementy' },
+  { url: 'https://mt-webdesign.ru/accordion#content_2', name: 'mt-webdesign.ru', category: 'Tilda návody' },
+  { url: 'https://nolim.cc/', name: 'nolim.cc', category: 'Tilda návody' },
+  { url: 'https://www.youtube.com/watch?v=eA9ZABAkh3o', name: 'youtube.com', category: 'Tilda návody', note: 'Sign in' },
+  { url: 'https://florainart.ru/?ref=https://tilda.cc/ru/madeontilda/', name: 'Флора', category: 'Tilda návody' },
+  { url: 'https://www.youtube.com/watch?v=VYEYW1HZqI8', name: 'youtube.com', category: 'Tilda návody', note: 'Preloader (YouTube' },
+  { url: 'https://nolim.cc/custom-tx16n2-tilda#!/tab/326630450-2', name: 'nolim.cc', category: 'Tilda návody', note: 'Drop down' },
+  { url: 'https://red-is.ru/', name: 'red-is.ru', category: 'Tilda návody' },
+  { url: 'https://www.youtube.com/watch?v=v3JjWOq3TfU', name: 'youtube.com', category: 'Tilda návody', note: 'Water' },
+  { url: 'https://lifehackov.ru/tilda-publishing/page/6/', name: 'lifehackov.ru', category: 'Tilda návody' },
+  { url: 'https://romanyu.ru/nalozhenie-bloka-pri-skrolle', name: 'romanyu.ru', category: 'Tilda návody' },
+  { url: 'https://necodim.ru/instruction', name: 'necodim.ru', category: 'Tilda návody' },
+  { url: 'https://contra.com/', name: 'contra.com', category: 'Tilda návody' },
+  { url: 'https://www.simplia.cz/', name: 'simplia.cz', category: 'Tilda návody' },
+  { url: 'https://www.fancycomponents.dev/docs/components/blocks/sticky-footer', name: 'fancycomponents.dev', category: 'Tilda návody' },
+  { url: 'https://badnoise.net/TypeRip/', name: 'badnoise.net', category: 'Hacks' },
+  { url: 'https://thefwa.com/awards/page/1/', name: 'thefwa.com', category: 'Awards' },
+  { url: 'https://cz.pinterest.com/pin/158470480631867859/', name: 'cz.pinterest.com', category: 'Luumo' },
+  { url: 'https://mockups.directory/products/blw06-iphone-16-pro', name: 'mockups.directory', category: 'Luumo' },
+  { url: 'https://justified.studio/work/wild/', name: 'justified.studio', category: 'Luumo' },
+  { url: 'https://studiolem.co.kr/321-boom-visual-identity-design', name: 'studiolem.co.kr', category: 'Luumo' },
+  { url: 'https://cz.pinterest.com/pin/21603273205972457/', name: 'cz.pinterest.com', category: 'Luumo' },
+  { url: 'https://wearemotto.com/portfolio/earnest', name: 'wearemotto.com', category: 'Socialmind' },
+];
+
+function screenshotUrl(url) {
+  return `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&embed=screenshot.url`;
+}
+
+function getDomain(url) {
+  try { return new URL(url).hostname.replace('www.', ''); }
+  catch { return url; }
+}
+
+// ─── SUPABASE CONFIG ──────────────────────────────────────────────────────────
+// Paste your Supabase project URL and anon key here:
+const SUPABASE_URL    = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+let supabase = null;
+let isSupabaseReady = false;
+
+try {
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY') {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    isSupabaseReady = true;
+  }
+} catch(e) {
+  console.warn('Supabase init failed:', e);
+}
+
+let sites = [];
+let activeFilter = 'all';
+
+function getCategories() {
+  const fromSites = [...new Set(sites.map(s => s.category))];
+  const empty = (window._emptyCategories || []).filter(c => !fromSites.includes(c));
+  return [...fromSites, ...empty];
+}
+
+function openCatModal() {
+  closeModal();
+  renderCatList();
+  document.getElementById('catModal').classList.add('open');
+  setTimeout(() => document.getElementById('catModalName').focus(), 50);
+}
+
+function closeCatModal() {
+  document.getElementById('catModal').classList.remove('open');
+  document.getElementById('catModalName').value = '';
+}
+
+function renderCatList() {
+  const list = document.getElementById('catList');
+  const cats = getCategories();
+  list.innerHTML = '';
+  cats.forEach(cat => {
+    const count = sites.filter(s => s.category === cat).length;
+    const item = document.createElement('div');
+    item.className = 'cat-list-item';
+    const safeCat = cat.replace(/'/g, "\'");
+    item.innerHTML = `
+      <div class="cat-list-item-left" id="cat-display-${safeCat}">
+        <span class="cat-list-name">${cat}</span>
+        <span class="cat-list-count">${count} site${count !== 1 ? 's' : ''}</span>
+      </div>
+      <div class="cat-list-item-left" id="cat-edit-${safeCat}" style="display:none">
+        <input class="cat-edit-input" id="cat-input-${safeCat}" value="${cat}"
+          onkeydown="if(event.key==='Enter') saveCatName('${safeCat}'); if(event.key==='Escape') cancelCatEdit('${safeCat}')"/>
+      </div>
+      <button class="cat-edit-btn" onclick="startCatEdit('${safeCat}', event)" title="Edit name">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
+      <button class="cat-delete-btn" onclick="deleteCategory('${safeCat}', event)" title="Delete category">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+        </svg>
+      </button>`;
+    list.appendChild(item);
+  });
+}
+
+function startCatEdit(cat, e) {
+  e.stopPropagation();
+  document.getElementById(`cat-display-${cat}`).style.display = 'none';
+  const editRow = document.getElementById(`cat-edit-${cat}`);
+  editRow.style.display = 'flex';
+  const input = document.getElementById(`cat-input-${cat}`);
+  input.focus();
+  input.select();
+}
+
+function cancelCatEdit(cat) {
+  document.getElementById(`cat-display-${cat}`).style.display = 'flex';
+  document.getElementById(`cat-edit-${cat}`).style.display = 'none';
+}
+
+async function saveCatName(oldCat) {
+  const input = document.getElementById(`cat-input-${oldCat}`);
+  const newCat = input.value.trim();
+  if (!newCat || newCat === oldCat) { cancelCatEdit(oldCat); return; }
+  if (isSupabaseReady) {
+    const { error } = await supabase.from('sites').update({ category: newCat }).eq('category', oldCat);
+    if (error) console.error('Rename cat error:', error);
+    await saveCatOrder();
+  }
+  sites.forEach(s => { if (s.category === oldCat) s.category = newCat; });
+  if (window._emptyCategories) {
+    window._emptyCategories = window._emptyCategories.map(c => c === oldCat ? newCat : c);
+  }
+  if (catOrder) catOrder = catOrder.map(c => c === oldCat ? newCat : c);
+  if (activeFilter === oldCat) activeFilter = newCat;
+  renderCatList();
+  buildFilters();
+  renderAll();
+}
+
+async function deleteCategory(cat, e) {
+  e.stopPropagation();
+  if (isSupabaseReady) {
+    const { error } = await supabase.from('sites').delete().eq('category', cat);
+    if (error) console.error('Delete category error:', error);
+    await saveCatOrder();
+  }
+  sites = sites.filter(s => s.category !== cat);
+  if (window._emptyCategories) {
+    window._emptyCategories = window._emptyCategories.filter(c => c !== cat);
+  }
+  if (activeFilter === cat) activeFilter = 'all';
+  renderCatList();
+  buildFilters();
+  renderAll();
+}
+
+async function addCategory() {
+  const name = document.getElementById('catModalName').value.trim();
+  if (!name) return;
+  if (!getCategories().includes(name)) {
+    window._emptyCategories = window._emptyCategories || [];
+    window._emptyCategories.push(name);
+  }
+  document.getElementById('catModalName').value = '';
+  if (isSupabaseReady) await saveCatOrder();
+  renderCatList();
+  buildFilters();
+}
+
+let catOrder = null; // custom drag order
+
+function buildFilters() {
+  const bar = document.getElementById('filterBar');
+  bar.innerHTML = '';
+  const cats = catOrder ? catOrder.filter(c => getCategories().includes(c)).concat(
+    getCategories().filter(c => !catOrder.includes(c))
+  ) : getCategories();
+
+  // 'All' button — not draggable
+  const allBtn = document.createElement('button');
+  allBtn.className = 'filter-btn' + (activeFilter === 'all' ? ' active' : '');
+  allBtn.textContent = 'All';
+  allBtn.onclick = () => setFilter('all', allBtn);
+  bar.appendChild(allBtn);
+
+  cats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn' + (activeFilter === cat ? ' active' : '');
+    btn.textContent = cat;
+    btn.draggable = true;
+    btn.dataset.cat = cat;
+    btn.onclick = () => setFilter(cat, btn);
+
+    // Drag events
+    btn.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', cat);
+      btn.classList.add('dragging');
+      setTimeout(() => btn.classList.add('dragging'), 0);
+    });
+    btn.addEventListener('dragend', () => btn.classList.remove('dragging'));
+    btn.addEventListener('dragover', e => {
+      e.preventDefault();
+      btn.classList.add('drag-over');
+    });
+    btn.addEventListener('dragleave', () => btn.classList.remove('drag-over'));
+    btn.addEventListener('drop', e => {
+      e.preventDefault();
+      btn.classList.remove('drag-over');
+      const fromCat = e.dataTransfer.getData('text/plain');
+      if (fromCat === cat) return;
+      // Reorder catOrder
+      const currentOrder = catOrder || getCategories();
+      const newOrder = [...currentOrder];
+      const fromIdx = newOrder.indexOf(fromCat);
+      const toIdx = newOrder.indexOf(cat);
+      if (fromIdx !== -1 && toIdx !== -1) {
+        newOrder.splice(fromIdx, 1);
+        newOrder.splice(toIdx, 0, fromCat);
+        catOrder = newOrder;
+        buildFilters();
+        if (isSupabaseReady) saveCatOrder();
+      }
+    });
+
+    bar.appendChild(btn);
+  });
+
+  // After building, update height to fit current state
+  updateFilterHeight();
+}
+
+function updateFilterHeight() {
+  const bar = document.getElementById('filterBar');
+  const toggle = document.getElementById('filterToggle');
+  if (!bar || !toggle) return;
+  if (bar.classList.contains('expanded')) {
+    bar.style.height = bar.scrollHeight + 'px';
+  } else {
+    bar.style.height = '32px';
+  }
+  // Only show toggle if content overflows single line
+  const hasOverflow = bar.scrollHeight > 40;
+  toggle.style.display = hasOverflow ? 'flex' : 'none';
+}
+
+function toggleFilters() {
+  const bar = document.getElementById('filterBar');
+  const toggle = document.getElementById('filterToggle');
+  const isExpanded = bar.classList.contains('expanded');
+  if (isExpanded) {
+    // Collapse: set explicit px first, then shrink
+    bar.style.height = bar.scrollHeight + 'px';
+    requestAnimationFrame(() => {
+      bar.style.height = '32px';
+      bar.classList.remove('expanded');
+      toggle.classList.remove('open');
+    });
+  } else {
+    bar.classList.add('expanded');
+    bar.style.height = bar.scrollHeight + 'px';
+    toggle.classList.add('open');
+    // After transition, remove fixed height so it's responsive
+    bar.addEventListener('transitionend', () => {
+      if (bar.classList.contains('expanded')) bar.style.height = 'auto';
+    }, { once: true });
+  }
+}
+
+function setFilter(cat, btn) {
+  activeFilter = cat;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
+}
+
+function openModal() {
+  closeCatModal();
+  const sel = document.getElementById('newCat');
+  sel.innerHTML = getCategories().map(c => `<option value="${c}">${c}</option>`).join('');
+  document.getElementById('modal').classList.add('open');
+  setTimeout(() => document.getElementById('newUrl').focus(), 50);
+}
+
+let uploadedImageData = null;
+
+function handleImageUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    uploadedImageData = ev.target.result;
+    document.getElementById('uploadPreview').style.display = 'block';
+    document.getElementById('uploadArea').style.display = 'none';
+    document.getElementById('uploadPreviewImg').src = uploadedImageData;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeUploadedImage(e) {
+  e.stopPropagation();
+  uploadedImageData = null;
+  document.getElementById('uploadPreview').style.display = 'none';
+  document.getElementById('uploadArea').style.display = 'flex';
+  document.getElementById('newImage').value = '';
+}
+
+// Drag & drop on upload area
+document.addEventListener('DOMContentLoaded', () => {
+  const area = document.getElementById('uploadArea');
+  if (!area) return;
+  area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('drag-over'); });
+  area.addEventListener('dragleave', () => area.classList.remove('drag-over'));
+  area.addEventListener('drop', e => {
+    e.preventDefault();
+    area.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      document.getElementById('newImage').files = dt.files;
+      handleImageUpload({ target: document.getElementById('newImage') });
+    }
+  });
+});
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  ['newUrl', 'newName', 'newNote', 'newCatName'].forEach(id => document.getElementById(id).value = '');
+  removeUploadedImage({ stopPropagation: () => {} });
+}
+
+async function addSite() {
+  const url = document.getElementById('newUrl').value.trim();
+  if (!url) return;
+  const newCatName = document.getElementById('newCatName').value.trim();
+  let cat = newCatName || document.getElementById('newCat').value || 'Uncategorized';
+  const name = document.getElementById('newName').value.trim() || getDomain(url);
+  const note = document.getElementById('newNote').value.trim();
+  const entry = { url, name, category: cat };
+  if (note) entry.note = note;
+  if (uploadedImageData) entry.customImage = uploadedImageData;
+
+  if (isSupabaseReady) {
+    const { data, error } = await supabase.from('sites').insert({
+      url: entry.url,
+      name: entry.name,
+      category: entry.category,
+      note: entry.note || null,
+      custom_image: entry.customImage || null,
+    }).select().single();
+    if (!error && data) entry.id = data.id;
+    else if (error) console.error('Insert error:', error);
+    await saveCatOrder();
+  }
+
+  sites.push(entry);
+  closeModal();
+  buildFilters();
+  renderAll();
+}
+
+// sort state per category: 'added' | 'alpha'
+const catSort = {};
+
+function getSorted(items, cat) {
+  const mode = catSort[cat] || 'added';
+  if (mode === 'alpha') return [...items].sort((a,b) => a.name.localeCompare(b.name));
+  return items; // 'added' = insertion order
+}
+
+function toggleSort(cat, mode, el) {
+  catSort[cat] = mode;
+  document.querySelectorAll(`.sort-btn[data-cat="${CSS.escape(cat)}"]`).forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  const grid = el.closest('.category-section').querySelector('.cards-grid');
+  grid.innerHTML = '';
+  const base = sites.filter(s => s.category === cat);
+  const query = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = query ? base.filter(s => s.name.toLowerCase().includes(query) || getDomain(s.url).includes(query)) : base;
+  getSorted(filtered, cat).forEach((site, si) => grid.appendChild(buildCard(site, `sort-${si}`)));
+}
+
+function renderAll() {
+  const query = document.getElementById('searchInput').value.toLowerCase();
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+  let totalShown = 0;
+
+  getCategories().forEach((cat, ci) => {
+    if (activeFilter !== 'all' && activeFilter !== cat) return;
+    let filtered = sites.filter(s => s.category === cat);
+    if (query) filtered = filtered.filter(s =>
+      s.name.toLowerCase().includes(query) || getDomain(s.url).includes(query)
+    );
+    if (!filtered.length) return;
+    totalShown += filtered.length;
+
+    const sortedFiltered = getSorted(filtered, cat);
+    const curSort = catSort[cat] || 'added';
+
+    const section = document.createElement('section');
+    section.className = 'category-section';
+    section.innerHTML = `
+      <div class="category-header">
+        <h2 class="category-name">${cat}</h2>
+        <span class="category-count">${filtered.length} site${filtered.length !== 1 ? 's' : ''}</span>
+        <div class="category-header-right">
+          <button class="sort-btn ${curSort==='added'?'active':''}" data-cat="${cat}" data-mode="added"
+            onclick="toggleSort('${cat.replace(/'/g,"\'")}','added',this)">Last added</button>
+          <button class="sort-btn ${curSort==='alpha'?'active':''}" data-cat="${cat}" data-mode="alpha"
+            onclick="toggleSort('${cat.replace(/'/g,"\'")}','alpha',this)">A–Z</button>
+        </div>
+      </div>
+      <div class="cards-grid"></div>
+    `;
+    main.appendChild(section);
+
+    const grid = section.querySelector('.cards-grid');
+    sortedFiltered.forEach((site, si) => grid.appendChild(buildCard(site, `${ci}-${si}`)));
+  });
+
+  if (!totalShown) main.innerHTML = '<div class="empty">No sites found</div>';
+  document.getElementById('siteCount').textContent = `${sites.length} site${sites.length !== 1 ? 's' : ''}`;
+}
+
+function buildCard(site, id) {
+  const card = document.createElement('a');
+  card.className = 'card';
+  card.href = site.url;
+  card.target = '_blank';
+  card.rel = 'noopener noreferrer';
+
+  card.innerHTML = `
+    <button class="card-edit" title="Edit site">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+      </svg>
+    </button>
+    <button class="card-delete" title="Delete site">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+      </svg>
+    </button>
+    <div class="card-preview">
+      ${site.customImage
+        ? `<img src="${site.customImage}" style="width:100%;height:100%;object-fit:cover;display:block" alt="${site.name}">`
+        : `<div class="preview-favicon-wrap">
+            <img src="https://www.google.com/s2/favicons?domain=${getDomain(site.url)}&sz=64"
+              class="preview-favicon" alt="${site.name}"
+              onerror="this.style.display='none'"/>
+            <span class="preview-favicon-domain">${getDomain(site.url)}</span>
+          </div>`
+      }
+    </div>
+    <div class="card-info">
+      <div class="card-name">${site.name}</div>
+      <div class="card-domain">${getDomain(site.url)}${site.note ? ' · <span class="card-note">' + site.note + '</span>' : ''}</div>
+    </div>
+  `;
+
+  card.querySelector('.card-edit').addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    openEditModal(site);
+  });
+
+  card.querySelector('.card-delete').addEventListener('click', async e => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isSupabaseReady && site.id) {
+      const { error } = await supabase.from('sites').delete().eq('id', site.id);
+      if (error) console.error('Delete error:', error);
+    }
+    sites = sites.filter(s => s !== site);
+    buildFilters();
+    renderAll();
+  });
+
+  return card;
+}
+
+let editingUrl = null;
+let editUploadedImageData = null;
+
+function openEditModal(site) {
+  closeModal();
+  closeCatModal();
+  editingUrl = site.url;
+  editUploadedImageData = site.customImage || null;
+
+  const sel = document.getElementById('editCat');
+  sel.innerHTML = getCategories().map(c => `<option value="${c}" ${c===site.category?'selected':''}>${c}</option>`).join('');
+
+  document.getElementById('editUrl').value = site.url;
+  document.getElementById('editName').value = site.name;
+  document.getElementById('editNote').value = site.note || '';
+
+  if (site.customImage) {
+    document.getElementById('editUploadPreview').style.display = 'block';
+    document.getElementById('editUploadArea').style.display = 'none';
+    document.getElementById('editUploadPreviewImg').src = site.customImage;
+  } else {
+    document.getElementById('editUploadPreview').style.display = 'none';
+    document.getElementById('editUploadArea').style.display = 'flex';
+  }
+
+  document.getElementById('editModal').classList.add('open');
+  setTimeout(() => document.getElementById('editName').focus(), 50);
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('open');
+  editingUrl = null;
+  editUploadedImageData = null;
+}
+
+function handleEditImageUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    editUploadedImageData = ev.target.result;
+    document.getElementById('editUploadPreview').style.display = 'block';
+    document.getElementById('editUploadArea').style.display = 'none';
+    document.getElementById('editUploadPreviewImg').src = editUploadedImageData;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeEditUploadedImage(e) {
+  e.stopPropagation();
+  editUploadedImageData = null;
+  document.getElementById('editUploadPreview').style.display = 'none';
+  document.getElementById('editUploadArea').style.display = 'flex';
+  document.getElementById('editImage').value = '';
+}
+
+async function saveEdit() {
+  const url = document.getElementById('editUrl').value.trim();
+  if (!url) return;
+  const idx = sites.findIndex(s => s.url === editingUrl);
+  if (idx === -1) return;
+  sites[idx].url = url;
+  sites[idx].name = document.getElementById('editName').value.trim() || getDomain(url);
+  sites[idx].note = document.getElementById('editNote').value.trim() || undefined;
+  sites[idx].category = document.getElementById('editCat').value;
+  if (editUploadedImageData) sites[idx].customImage = editUploadedImageData;
+  else delete sites[idx].customImage;
+
+  if (isSupabaseReady && sites[idx].id) {
+    const { error } = await supabase.from('sites').update({
+      url: sites[idx].url,
+      name: sites[idx].name,
+      category: sites[idx].category,
+      note: sites[idx].note || null,
+      custom_image: sites[idx].customImage || null,
+    }).eq('id', sites[idx].id);
+    if (error) console.error('Update error:', error);
+    await saveCatOrder();
+  }
+
+  closeEditModal();
+  buildFilters();
+  renderAll();
+}
+
+document.getElementById('editModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('editModal')) closeEditModal();
+});
+
+window.addEventListener('resize', updateFilterHeight);
+
+
+async function saveCatOrder() {
+  if (!isSupabaseReady) return;
+  const order = catOrder || getCategories();
+  try {
+    // Upsert single row (use id = 1 convention)
+    const { data: existing } = await supabase.from('category_order').select('id').limit(1).single();
+    if (existing) {
+      await supabase.from('category_order').update({ cat_order: order }).eq('id', existing.id);
+    } else {
+      await supabase.from('category_order').insert({ cat_order: order });
+    }
+  } catch(e) { console.error('saveCatOrder error:', e); }
+}
+
+async function initApp() {
+  if (!isSupabaseReady) {
+    console.warn('Supabase not configured — using local data only');
+    document.getElementById('setupBanner').classList.remove('hidden');
+    sites = [...INITIAL_DATA];
+    hideLoading();
+    buildFilters();
+    renderAll();
+    return;
+  }
+
+  try {
+    // Load category order
+    const { data: orderData } = await supabase
+      .from('category_order')
+      .select('cat_order')
+      .limit(1)
+      .single();
+    if (orderData?.cat_order) catOrder = orderData.cat_order;
+
+    // Load all sites
+    const { data, error } = await supabase
+      .from('sites')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    sites = (data || []).map(row => ({
+      id: row.id,
+      url: row.url,
+      name: row.name,
+      category: row.category,
+      note: row.note || undefined,
+      customImage: row.custom_image || undefined,
+    }));
+  } catch (e) {
+    console.error('Failed to load from Supabase:', e);
+    sites = [...INITIAL_DATA];
+  }
+
+  hideLoading();
+  buildFilters();
+  renderAll();
+}
+
+function hideLoading() {
+  const el = document.getElementById('appLoading');
+  el.classList.add('hidden');
+  setTimeout(() => el.style.display = 'none', 350);
+}
+
+function showSetupHelp() {
+  alert(\`To set up Supabase persistence:
+
+1. Go to supabase.com → New project
+2. In SQL Editor, run:
+
+CREATE TABLE sites (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  url text NOT NULL,
+  name text NOT NULL,
+  category text NOT NULL DEFAULT 'Uncategorized',
+  note text,
+  custom_image text,
+  created_at timestamptz DEFAULT now()
+);
+
+CREATE TABLE category_order (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  cat_order text[] DEFAULT '{}'
+);
+
+ALTER TABLE sites ENABLE ROW LEVEL SECURITY;
+ALTER TABLE category_order ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public access" ON sites FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public access" ON category_order FOR ALL USING (true) WITH CHECK (true);
+
+3. Go to Project Settings → API
+4. Copy Project URL and anon key
+5. Paste them into SUPABASE_URL and SUPABASE_ANON_KEY at the top of the script\`);
+}
+
+initApp();
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) closeModal();
+});
+
+document.getElementById('catModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('catModal')) closeCatModal();
+});
+</script>
+</body>
+</html>
