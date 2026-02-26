@@ -135,6 +135,19 @@
   .card:hover .card-delete, .card:hover .card-edit { opacity:1; transform:scale(1); }
   .card-delete:hover { background:#fff0f0; color:#e05555; border-color:#f5c5c5; }
   .card-edit:hover { background:#f0f8ff; color:#4a90d9; border-color:#c5dff5; }
+
+  /* ✅ FIX: make Categories modal scrollable (header/buttons stay visible, list scrolls) */
+  #catModal .modal{
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  #catList{
+    overflow-y: auto;
+    max-height: 50vh;
+    padding-right: 6px;
+  }
 </style>
 </head>
 
