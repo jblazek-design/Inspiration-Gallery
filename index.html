@@ -800,7 +800,7 @@
 </div>
 
 <div class="setup-banner hidden" id="setupBanner">
-  ⚠️ Supabase not configured — changes won't be saved.
+  ⚠️ base not configured — changes won't be saved.
   <a href="#" onclick="showSetupHelp()">How to set up →</a>
 </div>
 
@@ -1434,10 +1434,10 @@ function getDomain(url) {
   catch { return url; }
 }
 
-// ─── SUPABASE CONFIG ──────────────────────────────────────────────────────────
-// Paste your Supabase project URL and anon key here:
-const SUPABASE_URL    = 'https://avzofgqilxoxmfukwrpc.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2em9mZ3FpbHhveG1mdWt3cnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMDU0MDQsImV4cCI6MjA4NzY4MTQwNH0.e5LhEwg-o7--VFAwzKFOqdAYtTWCnifBsd9lxaasFms';
+// ─── BASE CONFIG ──────────────────────────────────────────────────────────
+// Paste your base project URL and anon key here:
+const BASE_URL    = 'https://avzofgqilxoxmfukwrpc.supabase.co';
+const BASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2em9mZ3FpbHhveG1mdWt3cnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMDU0MDQsImV4cCI6MjA4NzY4MTQwNH0.e5LhEwg-o7--VFAwzKFOqdAYtTWCnifBsd9lxaasFms';
 
 let supabase = null;
 let isSupabaseReady = false;
