@@ -82,7 +82,7 @@
   .preview-favicon-wrap { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:10px; background:#F5F5F7; }
   .preview-favicon { width:40px; height:40px; border-radius:10px; object-fit:contain; }
-  .preview-favicon-domain { font-size:11px; color:#9F9FA0; font-family:'Inter',sans-serif; }
+  .preview-favicon-domain { font-size:11px; color:#9F9FA0; font-family:'Inter',sans-serif; text-align:center; padding:0 10px; }
 
   .card-info { padding:12px 14px 14px; }
   .card-name { font-size:14px; font-weight:600; color:#1D1D1D; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -136,7 +136,7 @@
   .card-delete:hover { background:#fff0f0; color:#e05555; border-color:#f5c5c5; }
   .card-edit:hover { background:#f0f8ff; color:#4a90d9; border-color:#c5dff5; }
 
-  /* ✅ FIX: make Categories modal scrollable (header/buttons stay visible, list scrolls) */
+  /* ✅ Categories modal scroll */
   #catModal .modal{
     max-height: 80vh;
     overflow: hidden;
@@ -293,8 +293,8 @@
 /** =========================
  *  1) CONFIG — PASTE HERE
  *  ========================= */
-const SUPABASE_URL = 'https://avzofgqilxoxmfukwrpc.supabase.co';      // e.g. https://xxxxx.supabase.co
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2em9mZ3FpbHhveG1mdWt3cnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMDU0MDQsImV4cCI6MjA4NzY4MTQwNH0.e5LhEwg-o7--VFAwzKFOqdAYtTWCnifBsd9lxaasFms';    // anon public key
+const SUPABASE_URL = 'https://avzofgqilxoxmfukwrpc.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2em9mZ3FpbHhveG1mdWt3cnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMDU0MDQsImV4cCI6MjA4NzY4MTQwNH0.e5LhEwg-o7--VFAwzKFOqdAYtTWCnifBsd9lxaasFms';
 
 /** =========================
  *  2) OPTIONAL FALLBACK DATA
@@ -324,9 +324,12 @@ try {
  *  ========================= */
 let sites = [];
 let activeFilter = 'all';
-let catOrder = null;         // drag order
-const catSort = {};          // per category: 'added' | 'alpha'
-let editingId = null;        // current edit
+let catOrder = null;
+const catSort = {};
+let editingId = null;
+
+// small cache so we don't refetch previews constantly while you scroll/search
+const previewCache = new Map();
 
 function getDomain(url) {
   try { return new URL(url).hostname.replace('www.', ''); }
@@ -337,6 +340,36 @@ function getCategories() {
   const fromSites = [...new Set(sites.map(s => s.category))];
   const empty = (window._emptyCategories || []).filter(c => !fromSites.includes(c));
   return [...fromSites, ...empty];
+}
+
+/** =========================
+ *  4.5) OG PREVIEW (Microlink)
+ *  ========================= */
+function microlinkApi(url) {
+  return `https://api.microlink.io/?url=${encodeURIComponent(url)}&meta=true`;
+}
+
+async function fetchPreview(url) {
+  if (!url) return { title: null, description: null, image: null };
+  if (previewCache.has(url)) return previewCache.get(url);
+
+  const fallback = { title: null, description: null, image: null };
+  try {
+    const res = await fetch(microlinkApi(url));
+    const json = await res.json();
+    const data = json?.data;
+
+    const out = {
+      title: data?.title || null,
+      description: data?.description || null,
+      image: (data?.image && (data.image.url || data.image)) || null,
+    };
+    previewCache.set(url, out);
+    return out;
+  } catch (e) {
+    previewCache.set(url, fallback);
+    return fallback;
+  }
 }
 
 /** =========================
@@ -521,8 +554,9 @@ async function saveCatOrder() {
   if (!isSupabaseReady) return;
   const order = catOrder || getCategories();
 
-  // upsert single row (id=1 convention)
-  const { data: existing } = await supabaseClient.from('category_order').select('id').order('id', { ascending:true }).limit(1).maybeSingle();
+  const { data: existing } = await supabaseClient.from('category_order')
+    .select('id').order('id', { ascending:true }).limit(1).maybeSingle();
+
   if (existing?.id) {
     const { error } = await supabaseClient.from('category_order').update({ cat_order: order }).eq('id', existing.id);
     if (error) console.error('saveCatOrder update error:', error);
@@ -641,11 +675,9 @@ async function saveEdit() {
   const note = document.getElementById('editNote').value.trim() || null;
   const category = document.getElementById('editCat').value;
 
-  // find locally by id if exists, else by url match
   let idx = -1;
   if (editingId != null) idx = sites.findIndex(s => s.id === editingId);
   if (idx === -1) idx = sites.findIndex(s => s.url === url);
-
   if (idx === -1) return;
 
   sites[idx].url = url;
@@ -654,9 +686,7 @@ async function saveEdit() {
   sites[idx].category = category;
 
   if (isSupabaseReady && sites[idx].id != null) {
-    const { error } = await supabaseClient.from('sites').update({
-      url, name, note, category
-    }).eq('id', sites[idx].id);
+    const { error } = await supabaseClient.from('sites').update({ url, name, note, category }).eq('id', sites[idx].id);
     if (error) console.error('update error:', error);
   }
 
@@ -721,7 +751,7 @@ function buildCard(site) {
       </svg>
     </button>
 
-    <div class="card-preview">
+    <div class="card-preview" data-url="${site.url}">
       <div class="preview-favicon-wrap">
         <img src="https://www.google.com/s2/favicons?domain=${getDomain(site.url)}&sz=64"
           class="preview-favicon" alt="${site.name}"
@@ -738,6 +768,18 @@ function buildCard(site) {
       </div>
     </div>
   `;
+
+  // ✅ Replace favicon view with OG preview image (if available)
+  (async () => {
+    const preview = await fetchPreview(site.url);
+    if (preview?.image) {
+      const previewEl = card.querySelector('.card-preview');
+      // only replace if still same URL (avoids weirdness during re-render)
+      if (previewEl && previewEl.dataset.url === site.url) {
+        previewEl.innerHTML = `<img src="${preview.image}" alt="${site.name}">`;
+      }
+    }
+  })();
 
   card.querySelector('.card-edit').addEventListener('click', e => {
     e.preventDefault(); e.stopPropagation();
@@ -829,7 +871,6 @@ async function initApp() {
   }
 
   try {
-    // Load category order
     const { data: orderData, error: orderErr } = await supabaseClient
       .from('category_order')
       .select('cat_order')
@@ -840,7 +881,6 @@ async function initApp() {
     if (orderErr) console.warn('category_order load warning:', orderErr);
     if (orderData?.cat_order) catOrder = orderData.cat_order;
 
-    // Load sites
     const { data, error } = await supabaseClient
       .from('sites')
       .select('*')
@@ -867,7 +907,6 @@ async function initApp() {
 
 window.addEventListener('resize', updateFilterHeight);
 
-// close modals when clicking outside
 document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
 document.getElementById('catModal').addEventListener('click', e => { if (e.target.id === 'catModal') closeCatModal(); });
 document.getElementById('editModal').addEventListener('click', e => { if (e.target.id === 'editModal') closeEditModal(); });
